@@ -2,6 +2,7 @@ package com.kevinchristian.employee_service.service.impl;
 
 import java.util.Optional;
 
+import com.kevinchristian.employee_service.service.APIClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -19,15 +20,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService {
     private EmployeeRepository employeeRepository;
-    private WebClient webClient;
-
-    private final String DEPARTMENT_URL = "http://localhost:8080/api/v1/departments/";
+    private APIClient apiClient;
 
     @Override
     public void createEmployee(EmployeeCreateRequestDTO employeeCreateRequestDTO) {
-        DepartmentResponseDTO departmentResponseDTO = webClient.get()
-                .uri(DEPARTMENT_URL + employeeCreateRequestDTO.departmentCode()).retrieve()
-                .bodyToMono(DepartmentResponseDTO.class).block();
+        DepartmentResponseDTO departmentResponseDTO = apiClient.getDepartment(employeeCreateRequestDTO.departmentCode());
 
         if (departmentResponseDTO == null) {
             throw new RuntimeException();
@@ -42,9 +39,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Optional<Employee> employeeOptional = employeeRepository.findById(id);
         Employee employee = employeeOptional.orElseThrow();
 
-        DepartmentResponseDTO departmentResponseDTO = webClient.get()
-                .uri(DEPARTMENT_URL + employee.getDepartmentCode()).retrieve()
-                .bodyToMono(DepartmentResponseDTO.class).block();
+        DepartmentResponseDTO departmentResponseDTO = apiClient.getDepartment(employee.getDepartmentCode());
 
         EmployeeResponseDTO dto = EmployeeMapper.INSTANCE.employeeToEmployeeResponseDTO(employee);
         dto.setDepartmentResponseDTO(departmentResponseDTO);
